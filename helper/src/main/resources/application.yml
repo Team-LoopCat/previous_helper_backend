@@ -1,0 +1,20 @@
+# database Setting
+spring:
+  datasource:
+    driver-class-name: ${DB_DRIVER}
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        format_sql: true
+        show_sql: true
+jwt:
+  prefix: ${JWT_PREFIX}
+  header: ${JWT_HEADER}
+  secret: ${JWT_SECRET}
+  accessExpiration: ${JWT_ACCESS_TIME}
+  refreshExpiration: ${JWT_REFRESH_TIME}

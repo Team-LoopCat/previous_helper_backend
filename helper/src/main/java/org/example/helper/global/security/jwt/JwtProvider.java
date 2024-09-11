@@ -5,7 +5,10 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+import org.example.helper.global.error.exceptions.UnknownRoleException;
+import org.example.helper.global.error.exceptions.UserNotFoundException;
 import org.example.helper.global.security.auth.CustomUserDetailService;
+import org.example.helper.global.security.auth.Role;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -13,6 +16,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
 import java.util.Date;
+import java.util.UUID;
 
 @Component
 @RequiredArgsConstructor
@@ -20,27 +24,26 @@ public class JwtProvider {
     private final JwtProperties jwtProperties;
     private final CustomUserDetailService customUserDetailService;
 
-    public String generateAccess (String studentId, String grade, String classroom, String role) {
+    public String generateAccess (String ID, String role) {
         Long now = (new Date()).getTime();
         Date expireAt = new Date(now + jwtProperties.accessExpiration());
 
         return Jwts.builder()
-                .setSubject(studentId)
-                .claim("grade", studentId)
-                .claim("classroom", studentId)
-                .claim("role", studentId)
+                .setSubject(ID)
+                .claim("role", role)
                 .claim("type", "access")
                 .setExpiration(expireAt)
                 .signWith(SignatureAlgorithm.ES256, jwtProperties.secret())
                 .compact();
     }
 
-    public String generateRefresh (String studentId) {
+    public String generateRefresh (String ID, String role) {
         Long now = (new Date()).getTime();
         Date expireAt = new Date(now + jwtProperties.refreshExpiration());
 
         return Jwts.builder()
-                .setSubject(studentId)
+                .setSubject(ID)
+                .claim("role", role)
                 .claim("type", "refresh")
                 .setExpiration(expireAt)
                 .signWith(SignatureAlgorithm.ES256, jwtProperties.secret())
@@ -48,10 +51,19 @@ public class JwtProvider {
     }
 
 
-    // todo: 여기도 userEntity 완성되면 로직 약간 바꿔야함
     public Authentication getAuthorization (String token) {
         Claims claims = getClaim(token);
-        UserDetails userDetails = customUserDetailService.loadUserByUsername(claims.getSubject());
+
+        UserDetails userDetails = null;
+        if (claims.get("role") == Role.student) {
+            userDetails = customUserDetailService.loadUserByStudentId(claims.getSubject());
+        } else if (claims.get("role") == Role.teacher || claims.get("role") == Role.head) {
+            userDetails = customUserDetailService.loadUserByTeacherId(claims.getSubject());
+        } else {
+            throw UnknownRoleException.EXCEPTION;
+        }
+        if (userDetails == null) throw new UserNotFoundException();
+
         return new UsernamePasswordAuthenticationToken(userDetails, "", userDetails.getAuthorities());
     }
 

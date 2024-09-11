@@ -33,8 +33,8 @@ public class CustomUserDetailService implements UserDetailsService {
     }
 
     // todo: teacher entity 완성시 관련 로직 추가
-    public UserDetails loadUserByTeacherId(UUID teacherId) throws UserNotFoundException {
-        Teacher teacher = teacherRepository.findTeacherByTeacherId(teacherId).orElseThrow();
+    public UserDetails loadUserByTeacherId(String teacherId) throws UserNotFoundException {
+        Teacher teacher = teacherRepository.findTeacherByTeacherId(UUID.fromString(teacherId)).orElseThrow();
 
         return new CustomUserDetail(teacher.getTeacherId().toString(), teacher.getRole());
     }

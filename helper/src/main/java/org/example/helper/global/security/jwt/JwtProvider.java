@@ -58,7 +58,7 @@ public class JwtProvider {
         if (claims.get("role") == Role.student) {
             userDetails = customUserDetailService.loadUserByStudentId(claims.getSubject());
         } else if (claims.get("role") == Role.teacher || claims.get("role") == Role.head) {
-            userDetails = customUserDetailService.loadUserByTeacherId(UUID.fromString(claims.getSubject()));
+            userDetails = customUserDetailService.loadUserByTeacherId(claims.getSubject());
         } else {
             throw UnknownRoleException.EXCEPTION;
         }
